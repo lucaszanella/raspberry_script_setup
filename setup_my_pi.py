@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 #Lucas Zanella
 #Automatic wifi, shh, etc setup of a recently burned raspibian SD image
-
 from functions import * #file editing, ssh generation and other functions
 
 #----------BEGIN USER SCRIPT----------
@@ -14,7 +13,10 @@ print(fingerprints)
 
 #Configures the SSH file of raspbian
 sshd_config = replace_in_file("file_models/sshd_config", [["Port [0-9]*", "Port 2323"]])
-create_file(raspbian_root + "etc/ssh/sshd_config", sshd_config)
+ssh_config_sd_location = raspbian_root + "etc/ssh/sshd_config"
+create_file(ssh_config_sd_location, sshd_config)
+modify_file_permissions(ssh_config_sd_location, stat.S_IRUSR | stat.S_IWUSR) #Equivalent to 0600. Read: Permissions: https://docs.python.org/3/library/stat.html#stat.S_IRWXU
+
 
 #Configures wifi password
 network_ssid = "My_SSID"
