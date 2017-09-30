@@ -6,6 +6,7 @@ import sys
 import paramiko
 from hashlib import sha256 #Forget MD5, its broken
 import base64
+import hashlib, binascii
 
 #FILE EDITING TOOLS -------------------------------------
 def log(message):
@@ -16,6 +17,10 @@ def read_file(path):
     filedata = f.read()
     f.close()
     return filedata
+
+def wpa_psk(ssid, password): #https://en.wikipedia.org/wiki/Wi-Fi_Protected_Access#Target_users_.28authentication_key_distribution.29
+	dk = hashlib.pbkdf2_hmac('sha1', str.encode(password), str.encode(ssid), 4096)
+	return(binascii.hexlify(dk))
 
 #https://stackoverflow.com/a/22876912
 def backup_file(path):
@@ -33,21 +38,11 @@ def replace(content, rules):
         content = re.sub(re.compile('^(?!#)' + rule[0] + '$', re.MULTILINE), rule[1], content, 0)
     return content
 
-def is_file_or_symlink_to_file(path):
-    if os.path.islink(path):
-        print("is link: " + path + os.readlink(path))
-        print(path + "/" + os.readlink(path))
-        if os.path.isfile(path + "/" + os.readlink(path)):
-            print("is file on link: " + path)
-            return True
-        else:
-            return False
-    elif os.path.isfile(path):
-        return True
-    else:
-        return False
+def is_symlink(path):
+    return os.path.islink(path)
+      
 def list_files(path):
-    listOfFiles = [f for f in os.listdir(path) if is_file_or_symlink_to_file(path.rpartition("/")[0]+"/"+f)]
+    listOfFiles = [f for f in os.listdir(path) if is_symlink(path.rpartition("/")[0]+"/"+f)]
     return listOfFiles
 
 #RC services are old, but raspibian uses a compatiblity trick: https://unix.stackexchange.com/questions/233468/how-does-systemd-use-etc-init-d-scripts 
@@ -62,19 +57,15 @@ def enable_rc_service(raspbian_root, service_name):
 def modify_rc_service(raspbian_root, service_name, action=None):
     for i in range(0,6):
         rc_folder = raspbian_root + "etc/rc"+str(i)+".d/"
-        print("rc_folder: " + rc_folder)
-        print("files: " + str(list_files(rc_folder)))
         for file in list_files(rc_folder):
-            print(file)
+            #print(file)
             if re.match('[SK][0-9][0-9]' + service_name, file):
                 if action=="enable":
                     rename_file(rc_folder + file, "S" + file[1:3] + service_name)
-                    log("Service enabled")
+                    log(service_name + " enabled in folder " + "etc/rc"+str(i)+".d/")
                 elif action=="disable":
                     rename_file(rc_folder + file, "K" + file[1:3] + service_name)
-                    log("Service disabled")                    
-            else:
-                log("Enabling service gone wrong")
+                    log(service_name + " disabled in folder " + "etc/rc"+str(i)+".d/")
 
 def replace_in_file(file, rules):
     log("Replacing content of  " + file + " with rules " + str(rules))    
@@ -146,10 +137,12 @@ def ssh_keygen(save_to="etc/ssh/", password=None, user="root", host="raspberrypi
         #f.write(sha256_fingerprint(value.asbytes()))
         #f.close()
         fingerprints["sha256"][key] = sha256_fingerprint(value.asbytes())
+    '''
     f = open(save_to + "fingerprints",'w')
     for key_type, fingerprint in fingerprints["sha256"].items():
         f.write(key_type + ": " + fingerprint + "\n")
     f.close()
+    '''
     return fingerprints
 
 def add_quotation(string):
