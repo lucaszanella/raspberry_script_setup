@@ -7,43 +7,20 @@ import paramiko
 from hashlib import sha256 #Forget MD5, its broken
 import base64
 import hashlib, binascii
+import crypt
 
-#FILE EDITING TOOLS -------------------------------------
-def log(message):
-    print(message + "...")
-
-def read_file(path):
-    f = open(path,'r')
-    filedata = f.read()
-    f.close()
-    return filedata
+#LINUX MODIFYING TOOLS -------------------------------------
+def change_user_password(raspbian_root, user=None, password=None): #https://www.aychedee.com/2012/03/14/etc_shadow-password-hash-formats/
+    if not raspbian_root==None:
+        salt = "LRmQLPP3"
+        hashed_password = crypt.crypt(password, '$6$' + salt)
+        #hashed_password = crypt.crypt('raspberry', '$6$LRmQLPP3')
+        edit_file(raspbian_root + "etc/shadow", [[user + ":" + ".*", user + ":" + salt + hashed_password]])
 
 def wpa_psk(ssid, password): #https://en.wikipedia.org/wiki/Wi-Fi_Protected_Access#Target_users_.28authentication_key_distribution.29
 	dk = hashlib.pbkdf2_hmac('sha1', str.encode(password), str.encode(ssid), 4096)
 	return(binascii.hexlify(dk))
 
-#https://stackoverflow.com/a/22876912
-def backup_file(path):
-    log("Creating backup of " + path)
-    f = open(path,'r')
-    filedata = f.read()
-    f.close()
-    f = open(path+".backup",'w')
-    f.write(newdata)
-    f.close()
-
-def replace(content, rules):
-    for rule in rules:
-        #https://stackoverflow.com/a/1687663
-        content = re.sub(re.compile('^(?!#)' + rule[0] + '$', re.MULTILINE), rule[1], content, 0)
-    return content
-
-def is_symlink(path):
-    return os.path.islink(path)
-      
-def list_files(path):
-    listOfFiles = [f for f in os.listdir(path) if is_symlink(path.rpartition("/")[0]+"/"+f)]
-    return listOfFiles
 
 #RC services are old, but raspibian uses a compatiblity trick: https://unix.stackexchange.com/questions/233468/how-does-systemd-use-etc-init-d-scripts 
 def disable_rc_service(raspbian_root, service_name):
@@ -67,12 +44,84 @@ def modify_rc_service(raspbian_root, service_name, action=None):
                     rename_file(rc_folder + file, "K" + file[1:3] + service_name)
                     log(service_name + " disabled in folder " + "etc/rc"+str(i)+".d/")
 
-def replace_in_file(file, rules):
-    log("Replacing content of  " + file + " with rules " + str(rules))    
-    return replace(read_file(file), rules)
+#def from_file_replace(file, rules):
+#    log("Replacing content of  " + file + " with rules " + str(rules))    
+#    return replace(read_file(file), rules)
+
+#SSH KEY GENERATION TOOLS --------------------------------------------
+def sha256_fingerprint(bytes):
+    return base64.b64encode(sha256(bytes).digest()).decode("utf-8")
+
+def ssh_keygen(save_to="etc/ssh/", password=None, user="root", host="raspberrypi"):
+    keys = {}
+    fingerprints = {"sha256": {}}
+    rsa_key_bits = 4096
+    dsa_key_bits = 2048
+    ecdsa_key_bits = 521
+    log("Generating " + str(rsa_key_bits) + " RSA key")
+    keys["rsa"] = paramiko.RSAKey.generate(rsa_key_bits)
+    log("Generating " + str(dsa_key_bits) + " DSA key")
+    keys["dsa"] = paramiko.DSSKey.generate(2048)
+    log("Generating " + str(ecdsa_key_bits) + " ECDSA key")
+    keys["ecdsa"] = paramiko.ECDSAKey.generate(bits=521)
+
+    for key, value in keys.items():
+        make_path(save_to)
+        f = open(save_to + "ssh_host_" + key + "_key",'w')
+        value.write_private_key(f)
+        f.close()
+        modify_file_permissions(save_to + "ssh_host_" + key + "_key", 0o600)
+        f = open(save_to + "ssh_host_" + key + "_key.pub",'w')
+        f.write(value.get_name() + " " + value.get_base64() + " " + user + "@" + host)
+        f.close()
+        modify_file_permissions(save_to + "ssh_host_" + key + "_key.pub", 0o644)
+        #f = open( save_to + "ssh_host_" + key + "_key.pub.sha256fingerprint",'w')
+        #f.write(sha256_fingerprint(value.asbytes()))
+        #f.close()
+        fingerprints["sha256"][key] = sha256_fingerprint(value.asbytes())
+    
+    f = open(save_to + "sha256fingerprints",'w')
+    for key_type, fingerprint in fingerprints["sha256"].items():
+        f.write(key_type + ": " + fingerprint + "\n")
+    f.close()
+    
+    return fingerprints
+
+#INPUT/OUTPUT TOOLS -------------------------------------
+def log(message):
+    print(message + "...")
+
+def read_file(path):
+    f = open(path,'r')
+    filedata = f.read()
+    f.close()
+    return filedata
+
+def remove_file(path, do_backup=False):
+    if do_backup:
+        backup_file(path)
+    log("Removing file " + path)
+    os.remove(path)
+
+#https://stackoverflow.com/a/22876912
+def backup_file(path):#Todo: do backup of symlinks. Actually, modify read_file() to always follow symlinks
+    log("Creating backup of " + path)
+    f = open(path,'r')
+    filedata = f.read()
+    f.close()
+    f = open(path+".backup",'w')
+    f.write(newdata)
+    f.close()
+
+def is_symlink(path):
+    return os.path.islink(path)
+      
+def list_files(path):
+    listOfFiles = [f for f in os.listdir(path) if is_symlink(path.rpartition("/")[0]+"/"+f)]
+    return listOfFiles
 
 def modify_file_permissions(file, new_permission):
-    log("Modifying permissions from " + file + " to " + str(new_permission))
+    log("Modifying permissions of " + file + " to " + oct(new_permission))
     os.chmod(file, new_permission) #Read about python permissions nomenclature: https://docs.python.org/3/library/stat.html#stat.S_IRWXU
 
 '''
@@ -108,42 +157,11 @@ def edit_file(path, rules, backup=True):
 def make_path(path):
     os.makedirs(os.path.dirname(path), exist_ok=True)
 
-#SSH TOOLS --------------------------------------------
-def sha256_fingerprint(bytes):
-    return base64.b64encode(sha256(bytes).digest()).decode("utf-8")
-
-def ssh_keygen(save_to="etc/ssh/", password=None, user="root", host="raspberrypi"):
-    keys = {}
-    fingerprints = {"sha256": {}}
-    rsa_key_bits = 4096
-    dsa_key_bits = 2048
-    ecdsa_key_bits = 521
-    log("Generating " + str(rsa_key_bits) + " RSA key")
-    keys["rsa"] = paramiko.RSAKey.generate(rsa_key_bits)
-    log("Generating " + str(dsa_key_bits) + " DSA key")
-    keys["dsa"] = paramiko.DSSKey.generate(2048)
-    log("Generating " + str(ecdsa_key_bits) + " ECDSA key")
-    keys["ecdsa"] = paramiko.ECDSAKey.generate(bits=521)
-
-    for key, value in keys.items():
-        make_path(save_to)
-        f = open(save_to + "ssh_host_" + key + "_key",'w')
-        value.write_private_key(f)
-        f.close()
-        f = open(save_to + "ssh_host_" + key + "_key.pub",'w')
-        f.write(value.get_name() + " " + value.get_base64() + " " + user + "@" + host)
-        f.close()
-        #f = open( save_to + "ssh_host_" + key + "_key.pub.sha256fingerprint",'w')
-        #f.write(sha256_fingerprint(value.asbytes()))
-        #f.close()
-        fingerprints["sha256"][key] = sha256_fingerprint(value.asbytes())
-    '''
-    f = open(save_to + "fingerprints",'w')
-    for key_type, fingerprint in fingerprints["sha256"].items():
-        f.write(key_type + ": " + fingerprint + "\n")
-    f.close()
-    '''
-    return fingerprints
+def replace(content, rules):
+    for rule in rules:
+        #https://stackoverflow.com/a/1687663
+        content = re.sub(re.compile('^(?!#)' + rule[0] + '$', re.MULTILINE), rule[1], content, 0)
+    return content
 
 def add_quotation(string):
     return "\"" + string + "\""
