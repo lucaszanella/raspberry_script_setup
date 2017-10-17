@@ -9,6 +9,8 @@ import base64
 import hashlib, binascii
 import crypt
 
+newline = "\n"
+
 #LINUX MODIFYING TOOLS -------------------------------------
 def change_user_password(raspbian_root, user=None, password=None): #https://www.aychedee.com/2012/03/14/etc_shadow-password-hash-formats/
     if not raspbian_root==None:
@@ -21,24 +23,35 @@ def wpa_psk(ssid, password): #https://en.wikipedia.org/wiki/Wi-Fi_Protected_Acce
 	dk = hashlib.pbkdf2_hmac('sha1', str.encode(password), str.encode(ssid), 4096)
 	return(binascii.hexlify(dk))
 
+def run_once_at_boot(raspbian_root, commands): #https://raspberrypi.stackexchange.com/a/8083/74564
+    log("Adding commands \"" + commands + "\" to run in the first boot")  
+    touch(raspbian_root + "/etc/RUNONCEFLAG")
+    rc_local = read_file("file_models/rc.local")
+    run_once_command = "if [ -e /etc/RUNONCEFLAG ]; then" + newline + commands + newline + "/bin/rm /etc/RUNONCEFLAG" + newline + "fi"
+    rc_local = replace(rc_local, [["exit 0", run_once_command + newline + "exit 0"]])
+    create_file(raspbian_root + "/etc/rc.local", rc_local)
 
 #RC services are old, but raspibian uses a compatiblity trick: https://unix.stackexchange.com/questions/233468/how-does-systemd-use-etc-init-d-scripts 
-def disable_rc_service(raspbian_root, service_name):
+def disable_rc_service(raspbian_root, service_name, runlevel=None):
     log("Disabling " + service_name + " service")  
-    modify_rc_service(raspbian_root, service_name, action="disable")
+    modify_rc_service(raspbian_root, service_name, runlevel, action="disable")
   
-def enable_rc_service(raspbian_root, service_name):
+def enable_rc_service(raspbian_root, service_name, runlevel=None):
     log("Enabling " + service_name + " service")
-    modify_rc_service(raspbian_root, service_name, action="enable")
+    modify_rc_service(raspbian_root, service_name, runlevel, action="enable")
   
-def modify_rc_service(raspbian_root, service_name, action=None):
+def modify_rc_service(raspbian_root, service_name, runlevel=None, action=None):
     for i in range(0,6):
         rc_folder = raspbian_root + "etc/rc"+str(i)+".d/"
         for file in list_files(rc_folder):
             #print(file)
             if re.match('[SK][0-9][0-9]' + service_name, file):
+                if runlevel: 
+                    number = runlevel
+                else:
+                    number = file[1:3]
                 if action=="enable":
-                    rename_file(rc_folder + file, "S" + file[1:3] + service_name)
+                    rename_file(rc_folder + file, "S" + number + service_name)
                     log(service_name + " enabled in folder " + "etc/rc"+str(i)+".d/")
                 elif action=="disable":
                     rename_file(rc_folder + file, "K" + file[1:3] + service_name)
@@ -97,11 +110,21 @@ def read_file(path):
     f.close()
     return filedata
 
+def touch(path): #https://stackoverflow.com/a/6222692
+    if os.path.exists(path):
+        os.utime(path, None)
+    else:
+        open(path, 'a').close()
+
+
 def remove_file(path, do_backup=False):
     if do_backup:
         backup_file(path)
     log("Removing file " + path)
-    os.remove(path)
+    try:
+        os.remove(path)
+    except:
+        log("Something went wrong or file doesn't exist anymore")
 
 #https://stackoverflow.com/a/22876912
 def backup_file(path):#Todo: do backup of symlinks. Actually, modify read_file() to always follow symlinks

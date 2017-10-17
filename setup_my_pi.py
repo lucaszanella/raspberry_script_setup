@@ -6,6 +6,7 @@ from functions import * #file editing, ssh generation and other functions
 #----------BEGIN USER SCRIPT----------
 #Where is your SD card with Raspbian image located?
 raspbian_root = "/home/lz/Coding/zanella_raspberry_addons/raspberrypi_tree_tests/"
+#raspbian_root = "/media/lz/b4ea8e46-fe87-4ddd-9e94-506c37005ac53/"
 #raspbian_root = "/home/lz/Coding/etc_tests/"
 
 #Changes user´s password
@@ -26,8 +27,11 @@ modify_file_permissions(ssh_config_sd_location, 0o600)
 
 #SSH service comes deactivated by default on raspibian 
 #Raspibian currently uses RC services for SSH, but the startup process is systemd. A compatibility trick is used: https://unix.stackexchange.com/questions/233468/how-does-systemd-use-etc-init-d-scripts
-enable_rc_service(raspbian_root, "ssh")
-remove_file(raspbian_root + "etc/systemd/system/multi-user.target.wants/regenerate_ssh_host_keys.service", do_backup=False) #Removes script that generates ssh keys on first boot and then disables itself
+
+#enable_rc_service(raspbian_root, "ssh")
+remove_file(raspbian_root + "etc/systemd/system/multi-user.target.wants/regenerate_ssh_host_keys.service", do_backup=False) #Removes script that generates ssh keys on first boot
+
+run_once_at_boot(raspbian_root, "/usr/sbin/update-rc.d ssh enable && /usr/sbin/invoke-rc.d ssh start") #Activate and start ssh daemon on first boot, in the next boots it'll just start
 
 #Configures wifi password
 network_ssid = ""
@@ -37,8 +41,6 @@ country = "BR"
 #network_key_mgmt = "WPA-PSK"
 #network_pairwise = "CCMP"
 #network_auth_alg = "OPEN"
-
-newline = "\n"
 
 create_file(
     raspbian_root + "etc/wpa_supplicant/wpa_supplicant.conf",
