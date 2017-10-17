@@ -13,11 +13,20 @@ newline = "\n"
 
 #LINUX MODIFYING TOOLS -------------------------------------
 def change_user_password(raspbian_root, user=None, password=None): #https://www.aychedee.com/2012/03/14/etc_shadow-password-hash-formats/
-    if not raspbian_root==None:
-        salt = "LRmQLPP3"
-        hashed_password = crypt.crypt(password, '$6$' + salt)
-        #hashed_password = crypt.crypt('raspberry', '$6$LRmQLPP3')
-        edit_file(raspbian_root + "etc/shadow", [[user + ":" + ".*", user + ":" + salt + hashed_password]])
+    if user and password:
+        log("Changing password for user \"" + user + "\"")
+        shadow_file_location = raspbian_root + "etc/shadow"
+        shadow_file = read_file(shadow_file_location)
+        shadow_regex = "(?P<user>" + user + " ):(?P<hash_function>\$\w+\$)(?P<salt>\w+\$)(?P<hash>\w+[^:]+):(\d*):(\d*):(\d*):(\d*):(\d*):(\d*):(\d*)"
+        salt = "weuKU796Fef2234"
+        password = password
+        hashed_password_with_salt = crypt.crypt(password, '$6$' + salt)
+        shadow_file = re.sub(shadow_regex, "\g<user>:" + hashed_password_with_salt + ":\5:\6:\7:\8:\9:\10:\11", shadow_file)
+        #print(shadow_file)
+        create_file(shadow_file_location, shadow_file)
+        modify_file_permissions(shadow_file_location, 0o640)
+    else:
+        log("Something gone wrong while changing password")  
 
 def wpa_psk(ssid, password): #https://en.wikipedia.org/wiki/Wi-Fi_Protected_Access#Target_users_.28authentication_key_distribution.29
 	dk = hashlib.pbkdf2_hmac('sha1', str.encode(password), str.encode(ssid), 4096)
@@ -29,7 +38,7 @@ def run_once_at_boot(raspbian_root, commands): #https://raspberrypi.stackexchang
     rc_local = read_file("file_models/rc.local")
     run_once_command = "if [ -e /etc/RUNONCEFLAG ]; then" + newline + commands + newline + "/bin/rm /etc/RUNONCEFLAG" + newline + "fi"
     rc_local = replace(rc_local, [["exit 0", run_once_command + newline + "exit 0"]])
-    create_file(raspbian_root + "/etc/rc.local", rc_local)
+    create_file(raspbian_root + "etc/rc.local", rc_local)
 
 #RC services are old, but raspibian uses a compatiblity trick: https://unix.stackexchange.com/questions/233468/how-does-systemd-use-etc-init-d-scripts 
 def disable_rc_service(raspbian_root, service_name, runlevel=None):
