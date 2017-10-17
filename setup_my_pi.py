@@ -10,7 +10,7 @@ raspbian_root = "/home/lz/Coding/zanella_raspberry_addons/raspberrypi_tree_tests
 #raspbian_root = "/home/lz/Coding/etc_tests/"
 
 #Changes user´s password
-change_user_password(raspbian_root, user="pi", password="m4Z5dHjEWmHSzMy8ckRS")
+change_user_password(raspbian_root, user="pi", password="raspberry123")
 
 
 #Creates ssh keys on raspbian and generates SHA256 fingerprints

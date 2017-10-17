@@ -17,11 +17,11 @@ def change_user_password(raspbian_root, user=None, password=None): #https://www.
         log("Changing password for user \"" + user + "\"")
         shadow_file_location = raspbian_root + "etc/shadow"
         shadow_file = read_file(shadow_file_location)
-        shadow_regex = "(?P<user>" + user + " ):(?P<hash_function>\$\w+\$)(?P<salt>\w+\$)(?P<hash>\w+[^:]+):(\d*):(\d*):(\d*):(\d*):(\d*):(\d*):(\d*)"
+        shadow_regex = "(?P<user>" + user + "):(?P<hash_function>\$\w+\$)(?P<salt>\w+\$)(?P<hash>\w+[^:]+):(\d*):(\d*):(\d*):(\d*):(\d*):(\d*):(\d*)"
         salt = "weuKU796Fef2234"
-        password = password
         hashed_password_with_salt = crypt.crypt(password, '$6$' + salt)
-        shadow_file = re.sub(shadow_regex, "\g<user>:" + hashed_password_with_salt + ":\5:\6:\7:\8:\9:\10:\11", shadow_file)
+        #print("hashed_password_with_salt: " + hashed_password_with_salt)
+        shadow_file = re.sub(shadow_regex, r"\g<user>:" + hashed_password_with_salt + r":\5:\6:\7:\8:\9:\10:\11", shadow_file)
         #print(shadow_file)
         create_file(shadow_file_location, shadow_file)
         modify_file_permissions(shadow_file_location, 0o640)
