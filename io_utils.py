@@ -1,0 +1,92 @@
+import os
+import sys
+import re #regex
+
+#INPUT/OUTPUT TOOLS -------------------------------------
+def log(message):
+    print(message + "...")
+
+def read_file(path):
+    f = open(path,'r')
+    filedata = f.read()
+    f.close()
+    return filedata
+
+def touch(path): #https://stackoverflow.com/a/6222692
+    if os.path.exists(path):
+	os.utime(path, None)
+    else:
+	open(path, 'a').close()
+
+def remove_file(path, do_backup=False):
+    if do_backup:
+	backup_file(path)
+    log("Removing file " + path)
+    try:
+	os.remove(path)
+    except:
+	log("Something went wrong or file doesn't exist anymore")
+
+#https://stackoverflow.com/a/22876912
+def backup_file(path): #Todo: do backup of symlinks. Actually, modify read_file() to always follow symlinks
+    log("Creating backup of " + path)
+    f = open(path,'r')
+    filedata = f.read()
+    f.close()
+    f = open(path+".backup",'w')
+    f.write(newdata)
+    f.close()
+
+def is_symlink(path):
+    return os.path.islink(path)
+      
+def list_files(path):
+    listOfFiles = [f for f in os.listdir(path) if is_symlink(path.rpartition("/")[0]+"/"+f)]
+    return listOfFiles
+
+def modify_file_permissions(file, new_permission):
+    log("Modifying permissions of " + file + " to " + oct(new_permission))
+    #Read about python permissions nomenclature: https://docs.python.org/3/library/stat.html#stat.S_IRWXU
+    os.chmod(file, new_permission)
+'''
+Usage: 
+rename_file("path/to/my/old_file_name", "new_file_name") will change path/to/my/old_file_name to path/to/my/new_file_name
+or
+rename_file("old_file_name", "new_file_name") will change old_file_name to new_file_name (locally)
+'''
+def rename_file(file, new_name):
+    log("Renaming " + file + " to " + new_name)
+    partition = file.rpartition("/") #https://docs.python.org/3/library/stdtypes.html#str.rpartition
+    new_file = partition[0] + partition[1] + new_name
+    os.rename(file, new_file)
+    #print("should rename " + file + " to " + new_file) #https://docs.python.org/3/library/os.html#os.rename
+
+#Creates OR rewrites a file if it exists
+def create_file(path, content, permission=None):
+    log("Creating " + path)    
+    make_path(path)
+    f = open(path,'w')
+    f.write(content)
+    f.close()
+    if permission:
+	modify_file_permissions(path, permission)
+
+def edit_file(path, rules, backup=True):
+    log("Editing " + path)    
+    backup_file(path)
+    content = replace(read_file(path), rules)
+    create_file(path, content)
+
+#https://stackoverflow.com/a/12517490
+def make_path(path):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+
+def replace(content, rules):
+    for rule in rules:
+	#https://stackoverflow.com/a/1687663
+	content = re.sub(re.compile('^(?!#)' + rule[0] + '$', re.MULTILINE), rule[1], content, 0)
+    return content
+
+def add_quotation(string):
+    return "\"" + string + "\""
+
