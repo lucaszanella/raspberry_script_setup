@@ -20,19 +20,19 @@ class ImageEditor:
 	#https://www.aychedee.com/2012/03/14/etc_shadow-password-hash-formats/ #https://repl.it/MloY
 	def change_user_password(self, user=None, password=None): 
 	    if user and password:
-		log("Changing password for user \"" + user + "\"")
-		shadow_file_location = self.raspbian_root + "etc/shadow"
-		shadow_file = read_file(shadow_file_location)
-		shadow_regex = "(?P<user>" + user + "):(?P<hash_function>\$\w+\$)(?P<salt>\w+\$)(?P<hash>\w+[^:]+):(\d*):(\d*):(\d*):(\d*):(\d*):(\d*):(\d*)"
-		salt = "weuKU796Fef2234"
-		hashed_password_with_salt = crypt.crypt(password, '$6$' + salt)
-		#print("hashed_password_with_salt: " + hashed_password_with_salt)
-		shadow_file = re.sub(shadow_regex, r"\g<user>:" + hashed_password_with_salt + r":\5:\6:\7:\8:\9:\10:\11", shadow_file)
-		#print(shadow_file)
-		create_file(shadow_file_location, shadow_file)
-		modify_file_permissions(shadow_file_location, 0o640)
+                log("Changing password for user \"" + user + "\"")
+                shadow_file_location = self.raspbian_root + "etc/shadow"
+                shadow_file = read_file(shadow_file_location)
+                shadow_regex = "(?P<user>" + user + "):(?P<hash_function>\$\w+\$)(?P<salt>\w+\$)(?P<hash>\w+[^:]+):(\d*):(\d*):(\d*):(\d*):(\d*):(\d*):(\d*)"
+                salt = "weuKU796Fef2234"
+                hashed_password_with_salt = crypt.crypt(password, '$6$' + salt)
+                #print("hashed_password_with_salt: " + hashed_password_with_salt)
+                shadow_file = re.sub(shadow_regex, r"\g<user>:" + hashed_password_with_salt + r":\5:\6:\7:\8:\9:\10:\11", shadow_file)
+                #print(shadow_file)
+                create_file(shadow_file_location, shadow_file)
+                modify_file_permissions(shadow_file_location, 0o640)
 	    else:
-		log("Something gone wrong while changing password")  
+                log("Something gone wrong while changing password")  
 
 	#https://en.wikipedia.org/wiki/Wi-Fi_Protected_Access#Target_users_.28authentication_key_distribution.29
 	def wpa_psk(ssid, password):
@@ -65,33 +65,33 @@ class ImageEditor:
 	    keys["ecdsa"] = paramiko.ECDSAKey.generate(bits=521)
 
 	    for key, value in keys.items():
-		make_path(self.raspbian_root + save_to)
-		f = open(self.raspbian_root + save_to + "ssh_host_" + key + "_key",'w')
-		value.write_private_key(f)
-		f.close()
-		modify_file_permissions(self.raspbian_root + save_to + "ssh_host_" + key + "_key", 0o600)
-		f = open(save_to + "ssh_host_" + key + "_key.pub",'w')
-		f.write(value.get_name() + " " + value.get_base64() + " " + user + "@" + host)
-		f.close()
-		modify_file_permissions(self.raspbian_root + save_to + "ssh_host_" + key + "_key.pub", 0o644)
-		#f = open(self.raspbian_root + save_to + "ssh_host_" + key + "_key.pub.sha256fingerprint",'w')
-		#f.write(sha256_fingerprint(value.asbytes()))
-		#f.close()
-		fingerprints["sha256"][key] = sha256_fingerprint(value.asbytes())
+                make_path(self.raspbian_root + save_to)
+                f = open(self.raspbian_root + save_to + "ssh_host_" + key + "_key",'w')
+                value.write_private_key(f)
+                f.close()
+                modify_file_permissions(self.raspbian_root + save_to + "ssh_host_" + key + "_key", 0o600)
+                f = open(save_to + "ssh_host_" + key + "_key.pub",'w')
+                f.write(value.get_name() + " " + value.get_base64() + " " + user + "@" + host)
+                f.close()
+                modify_file_permissions(self.raspbian_root + save_to + "ssh_host_" + key + "_key.pub", 0o644)
+                #f = open(self.raspbian_root + save_to + "ssh_host_" + key + "_key.pub.sha256fingerprint",'w')
+                #f.write(sha256_fingerprint(value.asbytes()))
+                #f.close()
+                fingerprints["sha256"][key] = sha256_fingerprint(value.asbytes())
 	    
 	    f = open(self.raspbian_root + save_to + "sha256fingerprints",'w')
 	    for key_type, fingerprint in fingerprints["sha256"].items():
-		f.write(key_type + ": " + fingerprint + "\n")
+                f.write(key_type + ": " + fingerprint + "\n")
 	    f.close()
 	    
 	    return fingerprints
 	def add_new_wifi_network(self, 
-				network_ssid = "LucasZanella.com"
-				network_password = "risadaenviarcolunafevereirodescobrirpequeno"
-				country = "BR"
-				network_proto = "RSN"
-				network_key_mgmt = "WPA-PSK"
-				network_pairwise = "CCMP"
+				network_ssid = "LucasZanella.com",
+                                network_password = "risadaenviarcolunafevereirodescobrirpequeno",
+				country = "BR",
+				network_proto = "RSN",
+				network_key_mgmt = "WPA-PSK",
+				network_pairwise = "CCMP",
 				network_auth_alg = "OPEN"):
 		if network_ssid and network_password and country:
 			self.create_file(
@@ -114,6 +114,8 @@ class ImageEditor:
 	def read_file(self, path): read_file(self.raspbian_root + path)
 
 	def touch(self, path): touch(self.raspbian_root + path)
+
+	def file_exists(self, path): file_exists(self.raspbian_root + path)
 
 	def remove_file(self, path, do_backup=False): remove_file(self.raspbian_root + path, do_backup)
 

@@ -1,6 +1,8 @@
 import os
 import sys
 import re #regex
+import requests
+import shutil
 
 #INPUT/OUTPUT TOOLS -------------------------------------
 def log(message):
@@ -36,6 +38,9 @@ def backup_file(path): #Todo: do backup of symlinks. Actually, modify read_file(
     f = open(path+".backup",'w')
     f.write(newdata)
     f.close()
+
+def file_exists(path):
+    return os.path.isfile(fname)
 
 def is_symlink(path):
     return os.path.islink(path)
@@ -89,4 +94,14 @@ def replace(content, rules):
 
 def add_quotation(string):
     return "\"" + string + "\""
+
+#https://stackoverflow.com/questions/16694907/how-to-download-large-file-in-python-with-requests-py
+def download_file(url):
+    log("Downloading " + path)    
+    local_filename = url.split('/')[-1]
+    r = requests.get(url, stream=True)
+    with open(local_filename, 'wb') as f:
+        shutil.copyfileobj(r.raw, f)
+
+    return local_filename
 

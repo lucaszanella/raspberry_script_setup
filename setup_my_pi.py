@@ -4,6 +4,8 @@
 from ImageEditorClass import * #The class that will deal with the file tree of a linux image
 
 #---------------------BEGIN USER SCRIPT---------------------
+from io_utils import *
+download_file("https://downloads.raspberrypi.org/raspbian_latest")
 #Where is your SD card with Raspbian image located?
 raspbian_root = "/home/lz/Coding/zanella_raspberry_addons/raspberrypi_tree_tests/"
 raspbian_root = "/media/lz/b4ea8e46-fe87-4ddd-9e94-506c37005ac53/"
