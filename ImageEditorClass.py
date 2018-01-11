@@ -13,6 +13,9 @@ from io_utils import *
 
 newline = "\n"
 
+def sha256_fingerprint(bytes):
+	    return base64.b64encode(sha256(bytes).digest()).decode("utf-8")
+
 class ImageEditor:
 	def __init__(self, raspbian_root):
 	    self.raspbian_root = raspbian_root
@@ -45,11 +48,8 @@ class ImageEditor:
 	    touch(self.raspbian_root + "/etc/RUNONCEFLAG")
 	    rc_local = read_file("file_models/rc.local")
 	    run_once_command = "if [ -e /etc/RUNONCEFLAG ]; then" + newline + commands + newline + "/bin/rm /etc/RUNONCEFLAG" + newline + "fi"
-	    rc_local = replace(rc_local, [["exit 0", run_once_command + newline + "exit 0"]])
+	    rc_local = replace(rc_local, [["exit 0", run_once_command + "> first_run.txt 2>&1" + newline + "exit 0"]])
 	    create_file(self.raspbian_root + "etc/rc.local", rc_local)
-
-	def sha256_fingerprint(bytes):
-	    return base64.b64encode(sha256(bytes).digest()).decode("utf-8")
 
 	def ssh_keygen(self, save_to="etc/ssh/", password=None, user="root", host="raspberrypi"):
 	    keys = {}
@@ -70,7 +70,7 @@ class ImageEditor:
                 value.write_private_key(f)
                 f.close()
                 modify_file_permissions(self.raspbian_root + save_to + "ssh_host_" + key + "_key", 0o600)
-                f = open(save_to + "ssh_host_" + key + "_key.pub",'w')
+                f = open(self.raspbian_root + save_to + "ssh_host_" + key + "_key.pub",'w')
                 f.write(value.get_name() + " " + value.get_base64() + " " + user + "@" + host)
                 f.close()
                 modify_file_permissions(self.raspbian_root + save_to + "ssh_host_" + key + "_key.pub", 0o644)

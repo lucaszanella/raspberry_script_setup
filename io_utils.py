@@ -16,18 +16,18 @@ def read_file(path):
 
 def touch(path): #https://stackoverflow.com/a/6222692
     if os.path.exists(path):
-	os.utime(path, None)
+        os.utime(path, None)
     else:
-	open(path, 'a').close()
+        open(path, 'a').close()
 
 def remove_file(path, do_backup=False):
     if do_backup:
-	backup_file(path)
+        backup_file(path)
     log("Removing file " + path)
     try:
-	os.remove(path)
+        os.remove(path)
     except:
-	log("Something went wrong or file doesn't exist anymore")
+        log("Something went wrong or file doesn't exist anymore")
 
 #https://stackoverflow.com/a/22876912
 def backup_file(path): #Todo: do backup of symlinks. Actually, modify read_file() to always follow symlinks
@@ -74,7 +74,7 @@ def create_file(path, content, permission=None):
     f.write(content)
     f.close()
     if permission:
-	modify_file_permissions(path, permission)
+        modify_file_permissions(path, permission)
 
 def edit_file(path, rules, backup=True):
     log("Editing " + path)    
@@ -89,7 +89,7 @@ def make_path(path):
 def replace(content, rules):
     for rule in rules:
 	#https://stackoverflow.com/a/1687663
-	content = re.sub(re.compile('^(?!#)' + rule[0] + '$', re.MULTILINE), rule[1], content, 0)
+        content = re.sub(re.compile('^(?!#)' + rule[0] + '$', re.MULTILINE), rule[1], content, 0)
     return content
 
 def add_quotation(string):
