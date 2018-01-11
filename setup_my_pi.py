@@ -39,8 +39,8 @@ commands = ("/usr/sbin/update-rc.d ssh enable && /usr/sbin/invoke-rc.d ssh start
 raspbian.run_once_at_boot(commands)
 
 #Configures wifi
-raspbian.add_new_wifi_network(network_ssid = "GVT-D873", 
-		  network_password = "S1EC575852",
+raspbian.add_new_wifi_network(network_ssid = "NetworkNumber1", 
+		  network_password = "password",
 		  country = "BR")
 '''
 #You can add more than one network!
