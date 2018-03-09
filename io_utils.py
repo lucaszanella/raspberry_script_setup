@@ -95,6 +95,12 @@ def replace(content, rules):
 def add_quotation(string):
     return "\"" + string + "\""
 
+def copy(source, destination):
+    shutil.copy(source, destination)
+
+def copy_with_permissions(source, destination):
+    shutil.copy2(source, destination)
+
 #https://stackoverflow.com/questions/16694907/how-to-download-large-file-in-python-with-requests-py
 def download_file(url):
     log("Downloading " + path)    

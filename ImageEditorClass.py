@@ -131,9 +131,12 @@ class ImageEditor:
 
 	def create_file(self, path, content, permission=None): create_file(self.raspbian_root + path, content, permission)
 
+	def copy_file(self, source, destination): copy(self.raspbian_root + source, self.raspbian_root + destination)
+
 	def edit_file(self, path, rules, backup=True): edit_file(self.raspbian_root + path, rules, backup)
 
 	def make_path(self, path): make_path(self.raspbian_root + path)
+
 
 
 '''
