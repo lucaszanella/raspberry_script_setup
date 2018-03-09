@@ -86,9 +86,9 @@ class ImageEditor:
 	    
 	    return fingerprints
 	def add_new_wifi_network(self, 
-				network_ssid = "LucasZanella.com",
-                                network_password = "risadaenviarcolunafevereirodescobrirpequeno",
-				country = "BR",
+				network_ssid = None",
+                                network_password = None,
+				country = None,
 				network_proto = "RSN",
 				network_key_mgmt = "WPA-PSK",
 				network_pairwise = "CCMP",
@@ -132,6 +132,8 @@ class ImageEditor:
 	def create_file(self, path, content, permission=None): create_file(self.raspbian_root + path, content, permission)
 
 	def copy_file(self, source, destination): copy(self.raspbian_root + source, self.raspbian_root + destination)
+
+	def copy_file_with_permissions(self, source, destination): copy_with_permissions(self.raspbian_root + source, self.raspbian_root + destination)
 
 	def edit_file(self, path, rules, backup=True): edit_file(self.raspbian_root + path, rules, backup)
 
