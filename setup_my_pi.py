@@ -5,16 +5,23 @@ from ImageEditorClass import * #The class that will deal with the file tree of a
 
 #---------------------BEGIN USER SCRIPT---------------------
 from io_utils import *
+
+#TODO: implement this:
 #download_file("https://downloads.raspberrypi.org/raspbian_latest")
+
 #Where is your SD card with a burnt Raspbian image located?
-raspbian_root = "/home/lz/Coding/zanella_raspberry_addons/raspberrypi_tree_tests/"
 raspbian_root = "/media/lz/rootfs/"
-#raspbian_root = "/home/lz/Coding/etc_tests/"
+raspbian_boot = "/media/lz/boot/"
+#raspbian_root = "/home/lz/Coding/zanella_raspberry_addons/raspberrypi_tree_tests/"
 
 raspbian = ImageEditor(raspbian_root)
+raspbian_boot = ImageEditor(raspbian_boot)
 
 #Changes user´s password - VERY IMPORTANT! PICK SECURE PASSWORD (LONG AND RANDOM)
 raspbian.change_user_password(user="pi", password="raspberry123!!@@##")
+
+#Look at zones.txt in this diretory to know your zone, or just navigate through /usr/share/zoneinfo on any linux to find your timezone
+raspbian.change_timezone("America/Sao_Paulo")
 
 #Creates ssh keys on raspbian and generates SHA256 fingerprints
 fingerprints = raspbian.ssh_keygen(save_to = "etc/ssh/")
@@ -34,14 +41,15 @@ raspbian.remove_file("etc/systemd/system/multi-user.target.wants/regenerate_ssh_
 
 #Activate and start ssh daemon on first boot, in the next boots it'll just start
 commands = ("/usr/sbin/update-rc.d ssh enable && /usr/sbin/invoke-rc.d ssh start"
-	    " && sudo apt-get install -y curl" #Space before && is important
-	    " && export DEBIAN_FRONTEND=noninteractive && curl -fsSL get.docker.com -o get-docker.sh && sudo sh get-docker.sh")
+	    " && sudo apt-get install -y curl git python-pip python3-pip screen" #Space before && is important
+	    " && export DEBIAN_FRONTEND=noninteractive && curl -fsSL get.docker.com -o get-docker.sh && sudo sh get-docker.sh"
+            " && sudo pip install docker-compose ")
 raspbian.run_once_at_boot(commands)
 
 #Configures wifi
 raspbian.add_new_wifi_network(network_ssid = "NetworkNumber1", 
 		  network_password = "password",
-		  country = "BR")
+		  country = "US")
 '''
 #You can add more than one network!
 raspbian.add_new_wifi_network(network_ssid = "NetworkNumber2", 
