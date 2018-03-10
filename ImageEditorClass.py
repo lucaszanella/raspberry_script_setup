@@ -25,7 +25,8 @@ class ImageEditor:
 	#Just do ls /usr/share/zoneinfo to see al timezones (or better: tree /usr/share/zoneinfo)
 	#Timezone examples: America/Los_Angeles, America/Sao_Paulo 
 	def change_timezone(self, timezone):
-		self.copy_with_permissions('/usr/share/zoneinfo/' + timezone,  '/etc/localtime')
+		log("changing timezone to " + timezone)
+		self.copy_file_with_permissions('/usr/share/zoneinfo/' + timezone,  '/etc/localtime')
 
 	#https://www.aychedee.com/2012/03/14/etc_shadow-password-hash-formats/ #https://repl.it/MloY
 	def change_user_password(self, user=None, password=None): 
@@ -93,8 +94,8 @@ class ImageEditor:
 	    
 	    return fingerprints
 	def add_new_wifi_network(self, 
-				network_ssid = None",
-                                network_password = None,
+				network_ssid = None,
+                network_password = None,
 				country = None,
 				network_proto = "RSN",
 				network_key_mgmt = "WPA-PSK",

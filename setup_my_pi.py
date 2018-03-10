@@ -18,7 +18,7 @@ raspbian = ImageEditor(raspbian_root)
 raspbian_boot = ImageEditor(raspbian_boot)
 
 #Changes user´s password - VERY IMPORTANT! PICK SECURE PASSWORD (LONG AND RANDOM)
-raspbian.change_user_password(user="pi", password="raspberry123!!@@##")
+raspbian.change_user_password(user="pi", password="raspberry123")
 
 #Look at zones.txt in this diretory to know your zone, or just navigate through /usr/share/zoneinfo on any linux to find your timezone
 raspbian.change_timezone("America/Sao_Paulo")
@@ -47,8 +47,8 @@ commands = ("/usr/sbin/update-rc.d ssh enable && /usr/sbin/invoke-rc.d ssh start
 raspbian.run_once_at_boot(commands)
 
 #Configures wifi
-raspbian.add_new_wifi_network(network_ssid = "NetworkNumber1", 
-		  network_password = "password",
+raspbian.add_new_wifi_network(network_ssid = "wifi_name_here", 
+		  network_password = "wifi_password_here",
 		  country = "US")
 '''
 #You can add more than one network!
