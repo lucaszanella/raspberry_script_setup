@@ -41,7 +41,7 @@ raspbian.remove_file("etc/systemd/system/multi-user.target.wants/regenerate_ssh_
 
 #Activate and start ssh daemon on first boot, in the next boots it'll just start
 commands = ("/usr/sbin/update-rc.d ssh enable && /usr/sbin/invoke-rc.d ssh start"
-	    " && sudo apt-get install -y curl git python-pip python3-pip screen" #Space before && is important
+	    " && sudo apt-get update && sudo apt-get install -y curl git python-pip python3-pip screen" #Space before && is important
 	    " && export DEBIAN_FRONTEND=noninteractive && curl -fsSL get.docker.com -o get-docker.sh && sudo sh get-docker.sh"
             " && sudo pip install docker-compose ")
 raspbian.run_once_at_boot(commands)
