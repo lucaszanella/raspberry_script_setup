@@ -11,7 +11,7 @@ PS: it might also work with other debian based distros, it all depends on what y
 Just clone, edit the `setup_my_pi.py` with your configurations and run it. Don't forget to install paramiko:
 
 ```
-sudo apt install -y python3-paramiko
+pip3 install paramiko
 git clone https://github.com/lucaszanella/raspberry_script_setup
 cd raspberry_script_setup
 #Edit setup_my_pi.py here
