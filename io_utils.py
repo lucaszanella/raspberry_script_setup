@@ -76,6 +76,17 @@ def create_file(path, content, permission=None):
     if permission:
         modify_file_permissions(path, permission)
 
+#Creates OR rewrites a file if it exists
+def create_or_append_to_file(path, content, permission=None):
+    log("Creating or appending to  " + path)    
+    make_path(path)
+    f = open(path,'a')
+    f.write(content)
+    f.close()
+    if permission:
+        modify_file_permissions(path, permission)
+
+
 def edit_file(path, rules, backup=True):
     log("Editing " + path)    
     backup_file(path)

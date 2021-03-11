@@ -102,7 +102,7 @@ class ImageEditor:
 				network_pairwise = "CCMP",
 				network_auth_alg = "OPEN"):
 		if network_ssid and network_password and country:
-			self.create_file(
+			self.create_or_append_to_file(
 			    "etc/wpa_supplicant/wpa_supplicant.conf",
 			    "country=" + country + newline +
 			    "ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev" + newline +
@@ -110,7 +110,7 @@ class ImageEditor:
 			    "network={" + newline +
 			    "    ssid=" + add_quotation(network_ssid) + newline +
 			    "    psk=" + add_quotation(network_password) + newline +
-			    "}",
+			    "}" + newline,
 			    permission=0o600
 			)
 		else:
@@ -138,6 +138,8 @@ class ImageEditor:
 	def rename_file(self, path, new_name): rename_file(self.root + path, new_name)
 
 	def create_file(self, path, content, permission=None): create_file(self.root + path, content, permission)
+
+	def create_or_append_to_file(self, path, content, permission=None): create_or_append_to_file(self.root + path, content, permission)
 
 	def copy_file(self, source, destination): copy(self.root + source, self.root + destination)
 

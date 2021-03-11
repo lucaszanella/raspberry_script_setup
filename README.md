@@ -14,6 +14,7 @@ Just clone, edit the `setup_my_pi.py` with your configurations and run it. Don't
 pip3 install paramiko
 git clone https://github.com/lucaszanella/raspberry_script_setup
 cd raspberry_script_setup
-#Edit setup_my_pi.py here
-sudo ./setup_my_pi.py
+cp setup_my_pi.py pi.py
+#edit pi.py with your info
+sudo ./pi.py
 ```
