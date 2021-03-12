@@ -145,6 +145,8 @@ class ImageEditor:
 
 	def modify_file_permissions(self, path, new_permission): modify_file_permissions(self.root + path, new_permission)
 
+	def modify_ownership(self, path, user, group): modify_ownership(self.root + path, self.root, user, group)
+
 	def rename_file(self, path, new_name): rename_file(self.root + path, new_name)
 
 	def create_file(self, path, content, permission=None): create_file(self.root + path, content, permission)

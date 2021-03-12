@@ -6,6 +6,12 @@ You can already setup wireless name and password, ssh parameters like port, gene
 
 PS: it might also work with other debian based distros, it all depends on what you want to do.
 
+# Burn the raspbian image into an sd card
+
+```
+sudo dd if=2021-01-11-raspios-buster-armhf-full.img of=/dev/sda bs=4M conv=fsync
+```
+
 # How to
 
 Just clone, edit the `setup_my_pi.py` with your configurations and run it. Don't forget to install paramiko:

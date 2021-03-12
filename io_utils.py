@@ -54,17 +54,17 @@ def modify_file_permissions(file, new_permission):
     #Read about python permissions nomenclature: https://docs.python.org/3/library/stat.html#stat.S_IRWXU
     os.chmod(file, new_permission)
 
-def modify_ownership(file, user, group):
+def modify_ownership(file, root_dir, user, group):
     log("Modifying ownership of " + file + " to user " + user + " and group " + group)
     regex = "\w+:\w+:\d+:\d+:[\w\d\s,@()]*:[\w\d\s\/]*:[\d\s\w\/]*"
-    passwd_file = read_file(file)
+    passwd_file = read_file(root_dir + "/etc/passwd")
     passwd_regex_user = "(" + user + "):(\w+):(\d+):(\d+):([\w\d\s,@()]*):([\w\d\s\/]*):([\d\s\w\/]*)"
     passwd_search_user = re.search(passwd_regex_user, passwd_file)
     uid = passwd_search_user.group(3)
     passwd_regex_group = "(" + group + "):(\w+):(\d+):(\d+):([\w\d\s,@()]*):([\w\d\s\/]*):([\d\s\w\/]*)"
     passwd_search_group = re.search(passwd_regex_group, passwd_file)
     gid = passwd_search_group.group(4)
-    os.chown(file, uid, gid)
+    os.chown(file, int(uid), int(gid))
 '''
 Usage: 
 rename_file("path/to/my/old_file_name", "new_file_name") will change path/to/my/old_file_name to path/to/my/new_file_name
