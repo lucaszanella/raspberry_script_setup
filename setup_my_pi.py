@@ -7,6 +7,11 @@ from ImageEditorClass import * #The class that will deal with the file tree of a
 #---------------------BEGIN USER SCRIPT---------------------
 from io_utils import *
 
+paramiko = []
+
+#If you don't need ssh key keygen then you can comment `import paramiko`
+#import paramiko
+
 #TODO: implement automatic download and burn of raspbian image
 #download_file("https://downloads.raspberrypi.org/raspbian_latest")
 
@@ -33,8 +38,13 @@ raspbian.create_file(authorized_keys_location, authorized_keys)
 raspbian.modify_file_permissions(authorized_keys_location, 0o600)
 raspbian.modify_file_permissions(ssh_home_folder, 0o700)
 
+fingerprint = []
+
 #Creates ssh keys on raspbian and generates SHA256 fingerprints
-fingerprints = raspbian.ssh_keygen(save_to = "etc/ssh/")
+#Comment if you don't want to use paramiko, and also comment `import paramiko` on ImageEditorClass.py
+if paramiko:
+	fingerprints = raspbian.ssh_keygen(paramiko, save_to = "etc/ssh/")
+
 
 #Configures the SSH file of raspbian
 sshd_config = read_file("file_models/sshd_config")
@@ -58,14 +68,17 @@ commands = ("/usr/sbin/update-rc.d ssh enable && /usr/sbin/invoke-rc.d ssh start
             " && sudo pip install docker-compose ")
 raspbian.run_once_at_boot(commands)
 
+#Begins or overrides wpa_supplicant.conf file for the rigth country
+raspbian.begin_wpa_supplicant_file(country = "BR")
+
 #Configures wifi. Don't forget to put your country correctly
 raspbian.add_new_wifi_network(network_ssid = "wifi-name", 
-		  network_password = "wifi-password",
-		  country = "BR")
+		  network_password = "wifi-password")
 
 #You can add more than one network!
 raspbian.add_new_wifi_network(network_ssid = "wifi-name-2", 
-		  network_password = "wifi-password-2",
-		  country = "BR")
+		  network_password = "wifi-password-2")
 
-print(fingerprints)
+if fingerprints:
+	print("your fingerprints: ")
+	print(fingerprints)

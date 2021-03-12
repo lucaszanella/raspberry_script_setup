@@ -5,7 +5,6 @@ import os
 import stat
 import re #regex
 import sys
-import paramiko
 from hashlib import sha256 #Forget MD5 and SHA1, they're broken
 import base64
 import hashlib, binascii
@@ -30,20 +29,23 @@ class ImageEditor:
 
 	#https://www.aychedee.com/2012/03/14/etc_shadow-password-hash-formats/ #https://repl.it/MloY
 	def change_user_password(self, user=None, password=None): 
-	    if user and password:
-                log("Changing password for user \"" + user + "\"")
-                shadow_file_location = self.root + "etc/shadow"
-                shadow_file = read_file(shadow_file_location)
-                shadow_regex = "(?P<user>" + user + "):(?P<hash_function>\$\w+\$)(?P<salt>\w+\$)(?P<hash>\w+[^:]+):(\d*):(\d*):(\d*):(\d*):(\d*):(\d*):(\d*)"
-                salt = "weuKU796Fef2234"
-                hashed_password_with_salt = crypt.crypt(password, '$6$' + salt)
-                #print("hashed_password_with_salt: " + hashed_password_with_salt)
-                shadow_file = re.sub(shadow_regex, r"\g<user>:" + hashed_password_with_salt + r":\5:\6:\7:\8:\9:\10:\11", shadow_file)
-                #print(shadow_file)
-                create_file(shadow_file_location, shadow_file)
-                modify_file_permissions(shadow_file_location, 0o640)
-	    else:
-                log("Something gone wrong while changing password")  
+		if user and password:
+			log("Changing password for user \"" + user + "\"")
+			shadow_file_location = self.root + "etc/shadow"
+			shadow_file = read_file(shadow_file_location)
+			shadow_regex = "(?P<user>" + user + "):(?P<hash_function>\$[\da-zA-Z.]+\$)(?P<salt>[\da-zA-Z.]+\$)(?P<hash>[\da-zA-Z.]+[^:]+):(\d*):(\d*):(\d*):(\d*):(\d*):(\d*):(\d*)"
+			shadow_search = re.search(shadow_regex, shadow_file)
+			hash_function = shadow_search.group(2)
+			salt = crypt.mksalt()
+			hashed_password_with_salt = crypt.crypt(password, hash_function + salt)
+			#print("hashed_password_with_salt: " + hashed_password_with_salt)
+			shadow_file = re.sub(shadow_regex, r"\g<user>:" + hashed_password_with_salt + r":\5:\6:\7:\8:\9:\10:\11", shadow_file)
+			#shadow_file = re.sub(shadow_regex, r"\g<user>:" + hashed_password_with_salt + r":\5:\6:\7:\8:\9:\10:\11", shadow_file)
+			#print(shadow_file)
+			create_file(shadow_file_location, shadow_file)
+			modify_file_permissions(shadow_file_location, 0o640)
+		else:
+			log("Something gone wrong while changing password")  
 
 	#https://en.wikipedia.org/wiki/Wi-Fi_Protected_Access#Target_users_.28authentication_key_distribution.29
 	def wpa_psk(ssid, password):
@@ -59,7 +61,7 @@ class ImageEditor:
 	    rc_local = replace(rc_local, [["exit 0", run_once_command + "> first_run.txt 2>&1" + newline + "exit 0"]])
 	    create_file(self.root + "etc/rc.local", rc_local)
 
-	def ssh_keygen(self, save_to="etc/ssh/", password=None, user="root", host="raspberrypi"):
+	def ssh_keygen(self, paramiko, save_to="etc/ssh/", password=None, user="root", host="raspberrypi"):
 	    keys = {}
 	    fingerprints = {"sha256": {}}
 	    rsa_key_bits = 4096
@@ -93,20 +95,25 @@ class ImageEditor:
 	    f.close()
 	    
 	    return fingerprints
+
+	def begin_wpa_supplicant_file(country = None):
+		log("creating new wpa_supplicant.conf file for country " + country)
+		self.create_file(
+			"etc/wpa_supplicant/wpa_supplicant.conf",
+			"country=" + country + newline +
+			"ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev" + newline +
+			"update_config=1" + newline)
+
 	def add_new_wifi_network(self, 
 				network_ssid = None,
                 network_password = None,
-				country = None,
 				network_proto = "RSN",
 				network_key_mgmt = "WPA-PSK",
 				network_pairwise = "CCMP",
 				network_auth_alg = "OPEN"):
-		if network_ssid and network_password and country:
+		log("adding network with ssid " + network_ssid)
+		if network_ssid and network_password:
 			self.create_or_append_to_file(
-			    "etc/wpa_supplicant/wpa_supplicant.conf",
-			    "country=" + country + newline +
-			    "ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev" + newline +
-			    "update_config=1" + newline + 
 			    "network={" + newline +
 			    "    ssid=" + add_quotation(network_ssid) + newline +
 			    "    psk=" + add_quotation(network_password) + newline +

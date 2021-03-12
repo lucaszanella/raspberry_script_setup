@@ -15,6 +15,7 @@ pip3 install paramiko
 git clone https://github.com/lucaszanella/raspberry_script_setup
 cd raspberry_script_setup
 cp setup_my_pi.py pi.py
+chmod +x pi.py
 #edit pi.py with your info
 sudo ./pi.py
 ```
