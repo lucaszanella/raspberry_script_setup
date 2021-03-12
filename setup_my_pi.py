@@ -37,6 +37,8 @@ authorized_keys_location = ssh_home_folder + "authorized_keys"
 raspbian.create_file(authorized_keys_location, authorized_keys)
 raspbian.modify_file_permissions(authorized_keys_location, 0o600)
 raspbian.modify_file_permissions(ssh_home_folder, 0o700)
+raspbian.modify_ownership(ssh_home_folder, pi, pi)
+raspbian.modify_ownership(authorized_keys_location, pi, pi)
 
 fingerprint = []
 
