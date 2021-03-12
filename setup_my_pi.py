@@ -40,11 +40,9 @@ raspbian.modify_file_permissions(ssh_home_folder, 0o700)
 
 fingerprint = []
 
-#Creates ssh keys on raspbian and generates SHA256 fingerprints
-#Comment if you don't want to use paramiko, and also comment `import paramiko` on ImageEditorClass.py
+#Creates ssh keys on raspbian and generates SHA256 fingerprints. It's called only if you imported paramiko
 if paramiko:
 	fingerprints = raspbian.ssh_keygen(paramiko, save_to = "etc/ssh/")
-
 
 #Configures the SSH file of raspbian
 sshd_config = read_file("file_models/sshd_config")
@@ -58,8 +56,9 @@ ssh_config_sd_location = "etc/ssh/sshd_config"
 raspbian.create_file(ssh_config_sd_location, sshd_config)
 raspbian.modify_file_permissions(ssh_config_sd_location, 0o600)
 
-#Removes script that generates ssh keys on first boot
-raspbian.remove_file("etc/systemd/system/multi-user.target.wants/regenerate_ssh_host_keys.service", do_backup=False) 
+#Removes script that generates ssh keys on first boot (only needs to be run if we used paramiko to generate ssh keys)
+if paramiko:
+	raspbian.remove_file("etc/systemd/system/multi-user.target.wants/regenerate_ssh_host_keys.service", do_backup=False) 
 
 #Activate and start ssh daemon on first boot, in the next boots it'll just start
 commands = ("/usr/sbin/update-rc.d ssh enable && /usr/sbin/invoke-rc.d ssh start"
@@ -69,7 +68,7 @@ commands = ("/usr/sbin/update-rc.d ssh enable && /usr/sbin/invoke-rc.d ssh start
 raspbian.run_once_at_boot(commands)
 
 #Begins or overrides wpa_supplicant.conf file for the rigth country
-raspbian.begin_wpa_supplicant_file(country = "BR")
+raspbian.begin_wpa_supplicant_file("BR")
 
 #Configures wifi. Don't forget to put your country correctly
 raspbian.add_new_wifi_network(network_ssid = "wifi-name", 

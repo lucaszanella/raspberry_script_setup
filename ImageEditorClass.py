@@ -9,6 +9,8 @@ from hashlib import sha256 #Forget MD5 and SHA1, they're broken
 import base64
 import hashlib, binascii
 import crypt
+import random
+import string
 
 from io_utils import *
 
@@ -33,14 +35,14 @@ class ImageEditor:
 			log("Changing password for user \"" + user + "\"")
 			shadow_file_location = self.root + "etc/shadow"
 			shadow_file = read_file(shadow_file_location)
-			shadow_regex = "(?P<user>" + user + "):(?P<hash_function>\$[\da-zA-Z.]+\$)(?P<salt>[\da-zA-Z.]+\$)(?P<hash>[\da-zA-Z.]+[^:]+):(\d*):(\d*):(\d*):(\d*):(\d*):(\d*):(\d*)"
+			shadow_regex = "(?P<user>" + user + "):\$(?P<hash_function>[\da-zA-Z.\\\/]+)\$(?P<salt>[\da-zA-Z.\\\/]+\$)(?P<hash>[\da-zA-Z.\\\/]+[^:]+):(\d*):(\d*):(\d*):(\d*):(\d*):(\d*):(\d*)"
 			shadow_search = re.search(shadow_regex, shadow_file)
 			hash_function = shadow_search.group(2)
-			salt = crypt.mksalt()
-			hashed_password_with_salt = crypt.crypt(password, hash_function + salt)
+			salt = "$" + hash_function + "$" + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(16))
+			hashed_password_with_salt = crypt.crypt(password, salt)
 			#print("hashed_password_with_salt: " + hashed_password_with_salt)
 			shadow_file = re.sub(shadow_regex, r"\g<user>:" + hashed_password_with_salt + r":\5:\6:\7:\8:\9:\10:\11", shadow_file)
-			#shadow_file = re.sub(shadow_regex, r"\g<user>:" + hashed_password_with_salt + r":\5:\6:\7:\8:\9:\10:\11", shadow_file)
+#shadow_file = re.sub(shadow_regex, r"\g<user>:" + hashed_password_with_salt + r":\5:\6:\7:\8:\9:\10:\11", shadow_file)
 			#print(shadow_file)
 			create_file(shadow_file_location, shadow_file)
 			modify_file_permissions(shadow_file_location, 0o640)
@@ -96,7 +98,7 @@ class ImageEditor:
 	    
 	    return fingerprints
 
-	def begin_wpa_supplicant_file(country = None):
+	def begin_wpa_supplicant_file(self, country):
 		log("creating new wpa_supplicant.conf file for country " + country)
 		self.create_file(
 			"etc/wpa_supplicant/wpa_supplicant.conf",
@@ -114,6 +116,7 @@ class ImageEditor:
 		log("adding network with ssid " + network_ssid)
 		if network_ssid and network_password:
 			self.create_or_append_to_file(
+				"etc/wpa_supplicant/wpa_supplicant.conf",
 			    "network={" + newline +
 			    "    ssid=" + add_quotation(network_ssid) + newline +
 			    "    psk=" + add_quotation(network_password) + newline +
