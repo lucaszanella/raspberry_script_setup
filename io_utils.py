@@ -112,7 +112,7 @@ def make_path(path):
 def replace(content, rules):
     for rule in rules:
 	#https://stackoverflow.com/a/1687663
-        content = re.sub(re.compile('^(?!#)' + rule[0] + '$', re.MULTILINE), rule[1], content, 0)
+        content = re.sub(re.compile(rule[0], re.MULTILINE), rule[1], content, 0)
     return content
 
 def add_quotation(string):

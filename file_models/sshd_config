@@ -29,6 +29,7 @@ PermitRootLogin without-password
 StrictModes yes
 
 RSAAuthentication yes
+
 PubkeyAuthentication yes
 #AuthorizedKeysFile	%h/.ssh/authorized_keys
 

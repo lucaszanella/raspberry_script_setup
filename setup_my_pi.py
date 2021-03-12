@@ -32,8 +32,9 @@ raspbian.change_timezone("America/Sao_Paulo")
 authorized_keys = "ssh-rsa XXXX...XXXX == cardno:000000000000"
 
 #Setup of authorized keys file
-ssh_home_folder = "/home/pi/.ssh/"
-authorized_keys_location = ssh_home_folder + "authorized_keys"
+ssh_home_folder = "home/pi/.ssh/"
+#if we use `autohrized_keys`, it gets wiped by the ssh service on first boot, so we create a new one
+authorized_keys_location = ssh_home_folder + "authorized_keys_2"
 raspbian.create_file(authorized_keys_location, authorized_keys)
 raspbian.modify_file_permissions(authorized_keys_location, 0o600)
 raspbian.modify_file_permissions(ssh_home_folder, 0o700)
@@ -49,11 +50,11 @@ if paramiko:
 #Configures the SSH file of raspbian
 sshd_config = read_file("file_models/sshd_config")
 sshd_config = replace(sshd_config, [
-	      	["Port [0-9]*", "Port 2323"],
-		["HostKey /etc/ssh/ssh_host_ed25519_key", "#HostKey /etc/ssh/ssh_host_ed25519_key"],
-		["PasswordAuthentication \w+ ", "PasswordAuthentication no"],
-		["PubkeyAuthentication \w+", "PubkeyAuthentication yes"]
-		])
+	      	["^Port [0-9]*", "Port 2323"],
+			["^HostKey /etc/ssh/ssh_host_ed25519_key", "#HostKey /etc/ssh/ssh_host_ed25519_key"],
+			["^#*\s*PasswordAuthentication \w+", "PasswordAuthentication no"],
+			["^#*\s*PubkeyAuthentication \w+", "PubkeyAuthentication yes"]])
+sshd_config += "\nAuthorizedKeysFile     %h/.ssh/authorized_keys_2"
 ssh_config_sd_location = "etc/ssh/sshd_config"
 raspbian.create_file(ssh_config_sd_location, sshd_config)
 raspbian.modify_file_permissions(ssh_config_sd_location, 0o600)
