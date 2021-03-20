@@ -55,6 +55,8 @@ sshd_config = replace(sshd_config, [
 			["^#*\s*PasswordAuthentication \w+", "PasswordAuthentication no"],
 			["^#*\s*PubkeyAuthentication \w+", "PubkeyAuthentication yes"]])
 sshd_config += "\nAuthorizedKeysFile     %h/.ssh/authorized_keys_2"
+#TODO: this does not work. Why?
+#sshd_config += "\nServerAliveInterval 60"
 ssh_config_sd_location = "etc/ssh/sshd_config"
 raspbian.create_file(ssh_config_sd_location, sshd_config)
 raspbian.modify_file_permissions(ssh_config_sd_location, 0o600)
